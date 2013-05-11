@@ -1,0 +1,25 @@
+{
+  "name": "node-browsermob-proxy",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "webdriverjs": "~0.7.0",
+    "request": "~2.21.0"
+  },
+  "devDependencies": {
+    "mocha": "~1.9.0",
+    "nock": "~0.18.0",
+    "chai": "~1.6.0",
+    "sinon": "~1.7.2"
+  },
+  "scripts": {
+    "test": "mocha --ui exports --reporter spec"
+  },
+  "repository": "",
+  "author": "Kim Joar Bekkelund",
+  "license": "MIT"
+}
