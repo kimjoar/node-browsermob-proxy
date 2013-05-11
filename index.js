@@ -3,14 +3,14 @@ var webdriverjs = require('webdriverjs'),
 
 // # Browsermob Proxy bindings for Node.js
 //
-// Browsermob Proxy can capture performance data for web apps (via the HAR
-// format), as well as manipulate browser behavior and traffic, such as
-// whitelisting and blacklisting content, simulating network traffic and
-// latency, and rewriting HTTP requests and responses.
+// [Browsermob Proxy](http://bmp.lightbody.net/) can capture performance data
+// for web apps (via the HAR format), as well as manipulate browser behavior
+// and traffic, such as whitelisting and blacklisting content, simulating
+// network traffic and latency, and rewriting HTTP requests and responses.
 //
-// HAR (HTTP Archive) is an archival format for HTTP transactions that can be
-// used by a web browser to export detailed performance data about web pages
-// it loads.
+// [HAR (HTTP Archive)](https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/HAR/Overview.html)
+// is an archival format for HTTP transactions that can be used by a web
+// browser to export detailed performance data about web pages it loads.
 //
 // **Example**
 //
@@ -19,6 +19,10 @@ var webdriverjs = require('webdriverjs'),
 //     proxy.generateHAR('https://news.ycombinator.com/', function(err, data) {
 //         console.log(data);
 //     });
+//
+// You'll need both the Browsermob Proxy and
+// [Selenium Webdriver](http://docs.seleniumhq.org/projects/webdriver/) to be
+// up and running.
 //
 // This is by no means production-ready, and is primarily built because I wanted
 // to learn more about Browsermob Proxy. It is heavily inspired by Mark Trostler's
