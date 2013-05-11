@@ -78,7 +78,8 @@ module.exports = function(opts) {
     //
     // - `options` which are passed through to the browser traffic callback
     // - `trafficCallback` if you want to generate traffic beyond the simple
-    //   built-in helper which only opens the browser at a given url
+    //   built-in helper which uses Selenium Webdriver to open a browser at a
+    //   given url
     //
     // The parameters can be specified in the following ways:
     //
