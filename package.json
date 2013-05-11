@@ -1,7 +1,7 @@
 {
   "name": "node-browsermob-proxy",
   "version": "0.0.1",
-  "description": "",
+  "description": "Browsermob Proxy bindings for Node.js",
   "main": "index.js",
   "directories": {
     "test": "test"

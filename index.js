@@ -2,9 +2,28 @@ var webdriverjs = require('webdriverjs'),
     request = require('request'),
     url = require('url');
 
-// HTTP Archive (HAR)
-// The HAR specification:
-// http://www.softwareishard.com/blog/har-12-spec/
+// # Browsermob Proxy bindings for Node.js
+//
+// Browsermob Proxy can capture performance data for web apps (via the HAR
+// format), as well as manipulate browser behavior and traffic, such as
+// whitelisting and blacklisting content, simulating network traffic and
+// latency, and rewriting HTTP requests and responses.
+//
+// HAR (HTTP Archive) is an archival format for HTTP transactions that can be
+// used by a web browser to export detailed performance data about web pages
+// it loads.
+//
+// **Example**
+//
+//     var browsermobProxy = require('node-browsermob-proxy');
+//     var proxy = browsermobProxy();
+//     proxy.generateHAR('https://news.ycombinator.com/', function(err, data) {
+//         console.log(data);
+//     });
+//
+// This is by no means production-ready, and is primarily built because I wanted
+// to learn more about Browsermob Proxy. It is heavily inspired by Mark Trostler's
+// Node.js implementation, https://github.com/zzo/browsermob-node
 
 module.exports = function(opts) {
     opts = opts || {};
@@ -16,35 +35,56 @@ module.exports = function(opts) {
     var browserName = opts.browser || 'firefox';
     var logLevel = opts.logLevel || 'verbose';
 
-    var goTo = function(proxy, url, options, callback) {
-        // check if selenium is running?
-
-        options = options || {};
-
-        var params = {
-            host: options.seleniumHost || seleniumHost,
-            port: options.seleniumPort || seleniumPort,
-            desiredCapabilities: {
-                browserName: options.browser || browserName,
-                seleniumProtocol: 'WebDriver',
-                proxy: { httpProxy: proxy }
-            },
-            logLevel: options.logLevel || logLevel
-        }
-        var browser = webdriverjs.remote(params);
-
-        browser
-            .init()
-            .url(url)
-            .end(callback);
+    // Create a proxy
+    var start = function(callback) {
+        req('POST', '/proxy', function(err, response, body) {
+            if (err) return callback(err);
+            callback(null, JSON.parse(body));
+        });
     };
 
-    // url, options, trafficCallback, harCallback
-    // url, options, harCallback
-    // url, trafficCallback, harCallback
-    // url, harCallback
+    // Shut down the proxy and close the port
+    var stop = function(port, callback) {
+        req('DELETE', '/proxy/' + port, function(err, response, body) {
+            callback();
+        });
+    };
+
+    // Create a new HAR attached to the proxy
+    var startHAR = function(port, callback) {
+        req('PUT', '/proxy/' + port + '/har', function(err, response, body) {
+            callback();
+        });
+    };
+
+    // get HAR content for proxy
+    var getHAR = function(port, callback) {
+        req('GET', '/proxy/' + port + '/har', function(err, response, body) {
+            callback(null, JSON.parse(body));
+        });
+    };
+
+    // Convenience function to generate HAR for a given URL in one go.
+    //
+    // There are two required parameters:
+    //
+    // - the `url` to capture HAR for
+    // - the `harCallback` which is called when finished
+    //
+    // Optionally, you can specify:
+    //
+    // - `options` which are passed through to the browser traffic callback
+    // - `trafficCallback` if you want to generate traffic beyond the simple
+    //   built-in helper which only opens the browser at a given url
+    //
+    // The parameters can be specified in the following ways:
+    //
+    // - url, options, trafficCallback, harCallback
+    // - url, options, harCallback
+    // - url, trafficCallback, harCallback
+    // - url, harCallback
     var generateHAR = function(url, options, trafficCallback, harCallback) {
-        // check if browsermob is running
+        // check if browsermob is running?
 
         if (typeof harCallback === 'function') {
             // url, options, trafficCallback, harCallback
@@ -99,8 +139,7 @@ module.exports = function(opts) {
     };
 
     var urlFormat = function(path) {
-        var url = 'http://' + host + ':' + port + path;
-        return url;
+        return 'http://' + host + ':' + port + path;
     };
 
     var req = function(method, url, queryParams, callback) {
@@ -116,40 +155,33 @@ module.exports = function(opts) {
         request(obj, callback);
     };
 
-    // Create a proxy
-    var start = function(callback) {
-        req('POST', '/proxy', function(err, response, body) {
-            if (err) return callback(err);
-            callback(null, JSON.parse(body));
-        });
-    };
+    var goTo = function(proxy, url, options, callback) {
+        // check if selenium is running?
 
-    // Shut down the proxy and close the port
-    var stop = function(port, callback) {
-        req('DELETE', '/proxy/' + port, function(err, response, body) {
-            callback();
-        });
-    };
+        options = options || {};
 
-    // Create a new HAR attached to the proxy
-    var startHAR = function(port, callback) {
-        req('PUT', '/proxy/' + port + '/har', function(err, response, body) {
-            callback();
+        var browser = webdriverjs.remote({
+            host: options.seleniumHost || seleniumHost,
+            port: options.seleniumPort || seleniumPort,
+            desiredCapabilities: {
+                browserName: options.browser || browserName,
+                seleniumProtocol: 'WebDriver',
+                proxy: { proxyType: 'manual', httpProxy: proxy }
+            },
+            logLevel: options.logLevel || logLevel
         });
-    };
 
-    // get HAR content for proxy
-    var getHAR = function(port, callback) {
-        req('GET', '/proxy/' + port + '/har', function(err, response, body) {
-            callback(null, JSON.parse(body));
-        });
+        browser
+            .init()
+            .url(url)
+            .end(callback);
     };
 
     return {
-        generateHAR: generateHAR,
         start: start,
         stop: stop,
         startHAR: startHAR,
-        getHAR: getHAR
+        getHAR: getHAR,
+        generateHAR: generateHAR
     };
 };
