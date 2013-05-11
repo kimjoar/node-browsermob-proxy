@@ -1,6 +1,5 @@
 var webdriverjs = require('webdriverjs'),
-    request = require('request'),
-    url = require('url');
+    request = require('request');
 
 // # Browsermob Proxy bindings for Node.js
 //
