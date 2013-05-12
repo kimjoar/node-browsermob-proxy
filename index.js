@@ -120,30 +120,28 @@ module.exports = function(opts) {
     };
 
     var doGenerateHAR = function(url, options, trafficCallback, harCallback) {
-        start(function(err, data) {
-            if (err) return harCallback(err);
+        var port;
 
-            startHAR(data.port, function(err) {
-                if (err) {
-                    return stop(function() {
-                        harCallback(err);
-                    });
-                }
-
-                trafficCallback(host + ':' + data.port, url, options, function() {
-
-                    getHAR(data.port, function(err, resp) {
-                        if (err) return harCallback(err);
-
-                        stop(data.port, function(err) {
-                            if (err) return harCallback(err);
-
-                            harCallback(null, resp);
-                        });
-                    });
+        start()
+            .then(function(data) {
+                port = data.port;
+                return startHAR(port)
+            })
+            .then(function() {
+                return trafficCallback(host + ':' + port, url, options);
+            })
+            .then(function() {
+                return getHAR(port);
+            })
+            .then(function(resp) {
+                return stop(port).then(function() {
+                    harCallback(null, resp);
+                });
+            }, function(err) {
+                return stop(port).then(function() {
+                    harCallback(err);
                 });
             });
-        });
     };
 
     var urlFormat = function(path) {
