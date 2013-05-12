@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "webdriverjs": "~0.7.0",
-    "request": "~2.21.0"
+    "request": "~2.21.0",
+    "deferred": "~0.6.3"
   },
   "devDependencies": {
     "mocha": "~1.9.0",

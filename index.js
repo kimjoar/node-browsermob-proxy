@@ -1,5 +1,6 @@
 var webdriverjs = require('webdriverjs'),
-    request = require('request');
+    request = require('request')
+    deferred = require('deferred');
 
 // # Browsermob Proxy bindings for Node.js
 //
@@ -40,30 +41,33 @@ module.exports = function(opts) {
 
     // Create a proxy
     var start = function(callback) {
-        req('POST', '/proxy', function(err, response, body) {
-            if (err) return callback(err);
-            callback(null, JSON.parse(body));
+        return req('POST', '/proxy').then(function(resp) {
+            var data = JSON.parse(resp.body);
+            callback && callback(null, data);
+            return data;
         });
     };
 
     // Shut down the proxy and close the port
     var stop = function(port, callback) {
-        req('DELETE', '/proxy/' + port, function(err, response, body) {
-            callback();
+        return req('DELETE', '/proxy/' + port).then(function() {
+            callback && callback();
         });
     };
 
     // Create a new HAR attached to the proxy
     var startHAR = function(port, callback) {
-        req('PUT', '/proxy/' + port + '/har', function(err, response, body) {
-            callback();
+        return req('PUT', '/proxy/' + port + '/har', function() {
+            callback && callback();
         });
     };
 
     // get HAR content for proxy
     var getHAR = function(port, callback) {
-        req('GET', '/proxy/' + port + '/har', function(err, response, body) {
-            callback(null, JSON.parse(body));
+        return req('GET', '/proxy/' + port + '/har').then(function(resp) {
+            var data = JSON.parse(resp.body);
+            callback && callback(null, data);
+            return data;
         });
     };
 
@@ -147,6 +151,8 @@ module.exports = function(opts) {
     };
 
     var req = function(method, url, queryParams, callback) {
+        var def = deferred();
+
         if (typeof callback === 'undefined' && typeof queryParams === 'function') {
             callback = queryParams;
             queryParams = {};
@@ -156,11 +162,18 @@ module.exports = function(opts) {
             url: urlFormat(url),
             qs: queryParams
         }
-        request(obj, callback);
+        request(obj, function(err, response, body) {
+            callback && callback.apply(this, arguments);
+            def.resolve({ response: response, body: body });
+        });
+
+        return def.promise;
     };
 
     var goTo = function(proxy, url, options, callback) {
         // check if selenium is running?
+
+        var def = deferred();
 
         options = options || {};
 
@@ -178,7 +191,12 @@ module.exports = function(opts) {
         browser
             .init()
             .url(url)
-            .end(callback);
+            .end(function() {
+                callback && callback();
+                def.resolve();
+            });
+
+        return def.promise;
     };
 
     return {
